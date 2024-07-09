@@ -16,7 +16,7 @@ from bqskit import Circuit
 from bqskit import enable_logging
 from bqskit.compiler import Compiler
 from bqskit.passes import ForEachBlockPass
-from bqskit.passes import QuickPartitioner
+from bqskit.passes import QSearchSynthesisPass
 from bqskit.passes import ScanningGateRemovalPass
 from bqskit.passes import ToU3Pass
 from bqskit.passes import ToVariablePass
@@ -102,23 +102,23 @@ def run_gate_del_flow_example(in_circuit,
     # Prepare the compilation passes
     passes = [
         # Convert U3's to VU
-        ToVariablePass(),
+        #ToVariablePass(),
 
         # Split the circuit into partitions
-        QuickPartitioner(partition_size),
+        QSearchSynthesisPass(instantiate_options=instantiate_options)
 
         # For each partition perform scanning gate removal using QFactor jax
-        ForEachBlockPass([
-            ScanningGateRemovalPass(
-                instantiate_options=instantiate_options,
-            ),
-        ]),
+        #ForEachBlockPass([
+        #    ScanningGateRemovalPass(
+        #        instantiate_options=instantiate_options,
+        #    ),
+        #]),
 
         # Combine the partitions back into a circuit
-        UnfoldPass(),
+        #UnfoldPass(),
 
         # Convert back the VariablueUnitaires into U3s
-        ToU3Pass(),
+        #ToU3Pass(),
     ]
 
     # Create the compilation task

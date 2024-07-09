@@ -16,11 +16,14 @@ from bqskit import Circuit
 from bqskit import enable_logging
 from bqskit.compiler import Compiler
 from bqskit.passes import ForEachBlockPass
-from bqskit.passes import QuickPartitioner
+from bqskit.passes import QSearchSynthesisPass
 from bqskit.passes import ScanningGateRemovalPass
 from bqskit.passes import ToU3Pass
 from bqskit.passes import ToVariablePass
+from bqskit.passes import LEAPSynthesisPass
 from bqskit.passes import UnfoldPass
+from bqskit.passes import SimpleLayerGenerator
+from bqskit.ir.gates import VariableUnitaryGate
 
 from qfactorjax.qfactor import QFactorJax
 
@@ -99,25 +102,29 @@ def run_gate_del_flow_example(in_circuit,
     }
 
     # Prepare the compilation passes
+    #SimpleLayerGenerator(two_qudit_gate=CNOTGate, single_qudit_gate_1=U3Gate, single_qudit_gate_2=None, initial_layer_gate=None)
+
     passes = [
         # Convert U3's to VU
-        ToVariablePass(),
+        #ToVariablePass(),
 
         # Split the circuit into partitions
-        QuickPartitioner(partition_size),
+       #QuickPartitioner(partition_size),
+       #QSearchSynthesisPass(instantiate_options=instantiate_options),
+       LEAPSynthesisPass(layer_generator=SimpleLayerGenerator(two_qudit_gate=VariableUnitaryGate(2),single_qudit_gate_1=VariableUnitaryGate(1)),instantiate_options=instantiate_options)
 
         # For each partition perform scanning gate removal using QFactor jax
-        ForEachBlockPass([
-            ScanningGateRemovalPass(
-                instantiate_options=instantiate_options,
-            ),
-        ]),
+        #ForEachBlockPass([
+        #    ScanningGateRemovalPass(
+        #        instantiate_options=instantiate_options,
+        #    ),
+        #]),
 
         # Combine the partitions back into a circuit
-        UnfoldPass(),
+        #UnfoldPass(),
 
         # Convert back the VariablueUnitaires into U3s
-        ToU3Pass(),
+        #ToU3Pass(),
     ]
 
     # Create the compilation task
@@ -160,6 +167,7 @@ if __name__ == '__main__':
     USub = EmbedInU(SubMat)
 
     in_circuit = Circuit.from_unitary(USub)
+    #in_circuit = USub
 
     out_circuit, run_time = run_gate_del_flow_example(in_circuit)
 
