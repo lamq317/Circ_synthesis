@@ -1,0 +1,16 @@
+Started outgoing thread.
+Registered worker 0.
+Registered worker 1.
+Registered worker 2.
+Registered worker 3.
+Registered worker 4.
+Registered worker 5.
+Registered worker 6.
+Registered worker 7.
+Registered worker 8.
+Registered worker 9.
+Node has spawned 10 workers.
+Connected to client.
+AttachedServer running...
+New CompilationTask: 8a718035-a505-4e12-8453-76650f14523c.
+slurmstepd: error: *** JOB 28177344 ON nid004283 CANCELLED AT 2024-07-16T03:06:36 DUE TO TIME LIMIT ***

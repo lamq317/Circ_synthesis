@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/global/u1/l/lamq317/Q4Bio/NMR/Circ_synt/Comp5qub/samp_qf_synt_test.py", line 161, in <module>
+    out_circuit, run_time = run_gate_del_flow_example(in_circuit,amount_of_workers=nworkers,synt_pass=QSearchSynthesisPass)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/global/u1/l/lamq317/Q4Bio/NMR/Circ_synt/Comp5qub/samp_qf_synt_test.py", line 100, in run_gate_del_flow_example
+    'multistarts': num_multistarts,
+                   ^^^^^^^^^^^^^^^
+NameError: name 'num_multistarts' is not defined

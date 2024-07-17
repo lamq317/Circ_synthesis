@@ -1,0 +1,2 @@
+Warning: Failed writing log files to directory [/var/log/nvidia-mps]. No logs will be available.
+slurmstepd: error: *** JOB 28090876 ON nid008360 CANCELLED AT 2024-07-15T19:25:15 ***

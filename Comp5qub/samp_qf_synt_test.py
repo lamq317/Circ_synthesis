@@ -1,4 +1,7 @@
 #Running  complation of sub-matrix of block encoding of a 3-spin system using qfactor sample
+#Usage: python samp_qf_synt_test.py [Method] [nworkers] [t_idx]
+#current options [Method]=qsearch, leap
+
 
 from __future__ import annotations
 
@@ -11,8 +14,7 @@ from scipy.linalg import expm
 import scipy
 import sys
 sys.path.append('./utils/')
-import LayerGenDef ###When using sample-qfactor, we have an import error, that is absent when using qfactor
-
+#import LayerGenDef
 
 #from LayerGenDef import AltLayer
 
@@ -37,6 +39,7 @@ from qfactorjax.qfactor_sample_jax import QFactorSampleJax
 import scipy.io as spio
 
 enable_logging()
+
 
 def loadMat(mol,path):
     fname=path+f'generators_noesy_{mol}.mat'
@@ -65,20 +68,9 @@ def Umetric(TarMat):
 
 
 def run_gate_del_flow_example(in_circuit,
-        amount_of_workers: int = 10,
+        amount_of_workers: int = 10, synt_pass = QSearchSynthesisPass
 ) -> tuple[Circuit, float]:
-    # The circuit to resynthesize
-    #file_path = os.path.dirname(__file__) + '/grover5.qasm'
 
-    # Set the size of partitions
-    #partition_size = 4
-
-    #print(f'Will compile {file_path}')
-
-    # Read the QASM circuit
-    #in_circuit = Circuit.from_file(file_path)
-
-    # Prepare the instantiator
     num_multistarts = 32
 
 
@@ -112,28 +104,14 @@ def run_gate_del_flow_example(in_circuit,
     #SimpleLayerGenerator(two_qudit_gate=CNOTGate, single_qudit_gate_1=U3Gate, single_qudit_gate_2=None, initial_layer_gate=None)
 
     passes = [
-        # Convert U3's to VU
-        #ToVariablePass(),
 
         # Split the circuit into partitions
-       #QuickPartitioner(partition_size),
        #QSearchSynthesisPass(instantiate_options=instantiate_options),
-       #QSearchSynthesisPass(layer_generator=SimpleLayerGenerator(two_qudit_gate=VariableUnitaryGate(2),single_qudit_gate_1=VariableUnitaryGate(1)),instantiate_options=instantiate_options)
+       synt_pass(layer_generator=SimpleLayerGenerator(two_qudit_gate=VariableUnitaryGate(2),single_qudit_gate_1=VariableUnitaryGate(1)),
+                 success_threshold=1e-3,max_layer=5000,instantiate_options=instantiate_options)
        
-       QSearchSynthesisPass(layer_generator=LayerGenDef.AltLayer(),instantiate_options=instantiate_options)
+       #QSearchSynthesisPass(layer_generator=LayerGenDef.AltLayer(),instantiate_options=instantiate_options)
 
-        # For each partition perform scanning gate removal using QFactor jax
-        #ForEachBlockPass([
-        #    ScanningGateRemovalPass(
-        #        instantiate_options=instantiate_options,
-        #    ),
-        #]),
-
-        # Combine the partitions back into a circuit
-        #UnfoldPass(),
-
-        # Convert back the VariablueUnitaires into U3s
-        #ToU3Pass(),
     ]
 
     # Create the compilation task
@@ -143,7 +121,7 @@ def run_gate_del_flow_example(in_circuit,
         runtime_log_level=logging.INFO,
     ) as compiler:
 
-        print('Starting gate deletion flow using QFactor JAX')
+        print('Starting flow using Sample QFactor JAX')
         start = timer()
         out_circuit = compiler.compile(in_circuit, passes)
         end = timer()
@@ -154,40 +132,49 @@ def run_gate_del_flow_example(in_circuit,
 
 if __name__ == '__main__':
 
+    synt_pass = 'qsearch' if len(sys.argv) < 2 else sys.argv[1]
+    nworkers = 6 if len(sys.argv) < 3 else int(sys.argv[2])
+    t_idx = 1 if len(sys.argv) < 4 else int(sys.argv[3])
+
+
     loadMat = spio.loadmat('../data/alanineNMRdata_withrelaxation.mat',squeeze_me=True)
 
     Ham = loadMat['p']['H'].item()
     R = loadMat['p']['R'].item()
     t_grid = loadMat['p']['time_grid'].item()
 
-    TimeGen = (-1j*Ham+R)*t_grid[1]
+    TimeGen = (-1j*Ham+R)*t_grid[t_idx]
     ExpGen = expm(TimeGen)
 
     ####Embedding in unitary...
 
     EmbUn = EmbedInU(ExpGen)
+    nqubs = 4
+    SubU = np.copy(EmbUn[0:2**nqubs,0:2**nqubs])
+    
+    SubEmbU = EmbedInU(SubU)
 
 
-    sub_qub = 2 #defines the size of the sub-matrix that is taken from the block encoding
+    in_circuit = Circuit.from_unitary(SubEmbU)
 
-    SubMat = np.copy(EmbUn[0:2**sub_qub,0:2**sub_qub])
-
-    #Block encoding of the sub-matrix...
-    USub = EmbedInU(SubMat)
-
-    in_circuit = Circuit.from_unitary(USub)
-    #in_circuit = USub
-
-    out_circuit, run_time = run_gate_del_flow_example(in_circuit,amount_of_workers=1)
+    if synt_pass=='qsearch':
+        out_circuit, run_time = run_gate_del_flow_example(in_circuit,amount_of_workers=nworkers,synt_pass=QSearchSynthesisPass)
+    elif synt_pass=='leap':
+        out_circuit, run_time = run_gate_del_flow_example(in_circuit,amount_of_workers=nworkers,synt_pass=LEAPSynthesisPass)
+    else:
+        print("Error, use either qsearch or leap for method")
+        exit()
 
     Dict = {'circuit': out_circuit}
 
-    with open('./outputs/test_jaxqfcirc_t'+str(1)+'.pk', 'wb') as handle:
+    filename = './outputs/'+'sampqf_'+synt_pass+'t_'+str(t_idx)+'_'+str(nworkers)+'.pk'
+
+    with open(filename,'wb') as handle:
         pickle.dump(Dict, handle)
 
     print(
-        f'Partitioning + Synthesis took {run_time}'
-        f'seconds using QFactor JAX instantiation method.',
+        f'Synthesis took {run_time}'
+        f'seconds using Sample QFactor JAX instantiation method.',
     )
 
     print(
