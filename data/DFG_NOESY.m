@@ -11,10 +11,14 @@ sys.magnet=9.3933;
 bas.formalism='sphten-liouv';
 bas.approximation='none';
 
-inter.relaxation={'redfield','t1_t2'};
-inter.r1_rates={0 0};
-inter.r2_rates=34.0359*{1 1};
-inter.equilibrium='dibari';
+% inter.relaxation={'redfield','t1_t2'};
+% inter.r1_rates={0 0};
+% inter.r2_rates=34.0359*{1 1};
+% inter.equilibrium='dibari';
+
+inter.relaxation={'redfield'};
+inter.equilibrium='zero';
+
 inter.temperature=310;
 inter.rlx_keep='secular';
 inter.tau_c={0.5255e-9};
@@ -33,9 +37,27 @@ parameters.rho0=state(spin_system,'Lz','19F','chem');
 
 [fid,H,R,K]=liquid1(spin_system,@noesy1,parameters,'nmr');
 
+%% Hamiltonian
+
+gammaF = spin_system.inter.gammas(1); % in (rad/sec)/Tesla
+B0 = sys.magnet; % in Tesla
+w0 = -gammaF*B0; % in rad/sec
+o1 = 2*pi*parameters.offset; % offset in rad/sec
+w1 = o1+w0*inter.zeeman.scalar{1}/1e6; % freq of F1 in rad/sec
+w2 = o1+w0*inter.zeeman.scalar{2}/1e6; % freq of F2 in rad/sec
+J12 = 2*pi*inter.coupling.scalar{1,2}; % J-coupling in rad/sec
+Lz1=operator(spin_system,{'Lz'},{1});
+Lz2=operator(spin_system,{'Lz'},{2});
+Lx1Lx2=operator(spin_system,{'Lx','Lx'},{1,2});
+Ly1Ly2=operator(spin_system,{'Ly','Ly'},{1,2});
+Lz1Lz2=operator(spin_system,{'Lz','Lz'},{1,2});
+H_test = w1*Lz1 + w2*Lz2 + J12*(Lx1Lx2 + Ly1Ly2 + Lz1Lz2);
+max(max(abs(H-H_test)))
+
 
 %% Perform matrix exponentiation checks 
 % (note: using @liquid1 for H, R, K and @noesy1 which does not have magnetic field gradients)
+%{
 
 dt=1./parameters.sweep;
 Lx=operator(spin_system,'Lx',parameters.spins{1});
@@ -131,8 +153,10 @@ spectrum=fftshift(fft(f1_states,parameters.zerofill(1),2),2);
 figure(); scale_figure([1.5 2.0]);
 plot_2d(spin_system,-real(spectrum),parameters,...
         20,[0.01 0.1 0.01 0.1],2,256,6,'positive');
+%}
 
 %% save parameters
+%{
 dt=1./parameters.sweep;
 time_grid1 = 0:dt(1):(parameters.npoints(1)-1)*dt(1); % t1 evolution
 time_grid2 = 0:dt(2):(parameters.npoints(2)-1)*dt(2); % final detection
@@ -147,5 +171,6 @@ p.fid = fid;
 p.fid_test = fid_test; % the fid's obtained via explicit matrix exponentiation
 p.R = R;
 
-save DFG.mat p
+% save DFG.mat p
 
+%}
