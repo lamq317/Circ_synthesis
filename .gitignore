@@ -1,6 +1,6 @@
 # Misc
 *.pyx
-*.DS_Store
+.DS_Store
 # Sublime Text
 *.sublime-project
 *.sublime-workspace
@@ -20,3 +20,5 @@ develop-eggs/
 dist/
 downloads/
 eggs/
+
+Notebooks/.DS_Store 
