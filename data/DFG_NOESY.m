@@ -64,14 +64,14 @@ Lx=operator(spin_system,'Lx',parameters.spins{1});
 Ly=operator(spin_system,'Ly',parameters.spins{1});
 coil=state(spin_system,'L+',parameters.spins{1},'cheap');
 
-% L_net=H+1i*R+1i*K;
-% L_dt1 = expm(-1i*L_net*dt(1));
-% L_dt2 = expm(-1i*L_net*dt(2));
-% U_mix = expm(-1i*L_net*parameters.tmix);
-% U90x = expm(-1i*Lx*pi/2);
-% U90y = expm(-1i*Ly*pi/2);
-% rho1 = L_dt2*L_dt2*U90y*U_mix*U90y*L_dt1*U90x*parameters.rho0;
-% rho2 = L_dt2*L_dt2*U90y*U_mix*(U90y')*L_dt1*U90x*parameters.rho0;
+L_net=H+1i*R+1i*K;
+L_dt1 = expm(-1i*L_net*dt(1));
+L_dt2 = expm(-1i*L_net*dt(2));
+U_mix = expm(-1i*L_net*parameters.tmix);
+U90x = expm(-1i*Lx*pi/2);
+U90y = expm(-1i*Ly*pi/2);
+rho1 = L_dt2*L_dt2*U90y*U_mix*U90y*L_dt1*U90x*parameters.rho0;
+rho2 = L_dt2*L_dt2*U90y*U_mix*(U90y')*L_dt1*U90x*parameters.rho0;
 
 
 % first 90x pulse
@@ -117,7 +117,7 @@ for i = 1:parameters.npoints(1)
         fid_temp(j,i,1) = trace(coil'*rho1);
         rho1 = L_dt2*rho1;
 
-        fid_temp(j,i,2) = trace(coil'*rho2);
+     fid_temp(j,i,2) = trace(coil'*rho2);
         rho2 = L_dt2*rho2;
 
         fid_temp(j,i,3) = trace(coil'*rho3);

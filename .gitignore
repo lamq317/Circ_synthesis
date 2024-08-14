@@ -20,3 +20,5 @@ develop-eggs/
 dist/
 downloads/
 eggs/
+
+Notebooks/.DS_Store 
