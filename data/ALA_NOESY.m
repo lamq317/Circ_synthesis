@@ -1,7 +1,8 @@
 clc
 clear all
 
-props=gparse('/usr/software/spinach/examples/standard_systems/alanine.log');
+% props=gparse('/usr/software/spinach/examples/standard_systems/alanine.log');
+props=gparse('alanine.log');
 [sys,inter]=g2spinach(props,{{'H','1H'}},31.8);
 H_index = [2 3 4 5];
 
